@@ -1,4 +1,4 @@
-/* perfect-scrollbar v0.6.12 */
+/* perfect-scrollbar v0.6.16 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
@@ -271,9 +271,9 @@ var toInt = exports.toInt = function (x) {
 };
 
 var clone = exports.clone = function (obj) {
-  if (obj === null) {
+  if (!obj) {
     return null;
-  } else if (obj.constructor === Array) {
+  } else if (Array.isArray(obj)) {
     return obj.map(clone);
   } else if (typeof obj === 'object') {
     var result = {};
@@ -367,7 +367,6 @@ module.exports = {
   minScrollbarLength: null,
   scrollXMarginOffset: 0,
   scrollYMarginOffset: 0,
-  stopPropagationOnClick: true,
   suppressScrollX: false,
   suppressScrollY: false,
   swipePropagation: true,
@@ -404,7 +403,6 @@ module.exports = function (element) {
 },{"../lib/dom":3,"../lib/helper":6,"./instances":20}],10:[function(require,module,exports){
 'use strict';
 
-var _ = require('../../lib/helper');
 var instances = require('../instances');
 var updateGeometry = require('../update-geometry');
 var updateScroll = require('../update-scroll');
@@ -415,43 +413,23 @@ function bindClickRailHandler(element, i) {
   }
   var stopPropagation = function (e) { e.stopPropagation(); };
 
-  if (i.settings.stopPropagationOnClick) {
-    i.event.bind(i.scrollbarY, 'click', stopPropagation);
-  }
+  i.event.bind(i.scrollbarY, 'click', stopPropagation);
   i.event.bind(i.scrollbarYRail, 'click', function (e) {
-    var halfOfScrollbarLength = _.toInt(i.scrollbarYHeight / 2);
-    var positionTop = i.railYRatio * (e.pageY - window.pageYOffset - pageOffset(i.scrollbarYRail).top - halfOfScrollbarLength);
-    var maxPositionTop = i.railYRatio * (i.railYHeight - i.scrollbarYHeight);
-    var positionRatio = positionTop / maxPositionTop;
+    var positionTop = e.pageY - window.pageYOffset - pageOffset(i.scrollbarYRail).top;
+    var direction = positionTop > i.scrollbarYTop ? 1 : -1;
 
-    if (positionRatio < 0) {
-      positionRatio = 0;
-    } else if (positionRatio > 1) {
-      positionRatio = 1;
-    }
-
-    updateScroll(element, 'top', (i.contentHeight - i.containerHeight) * positionRatio);
+    updateScroll(element, 'top', element.scrollTop + direction * i.containerHeight);
     updateGeometry(element);
 
     e.stopPropagation();
   });
 
-  if (i.settings.stopPropagationOnClick) {
-    i.event.bind(i.scrollbarX, 'click', stopPropagation);
-  }
+  i.event.bind(i.scrollbarX, 'click', stopPropagation);
   i.event.bind(i.scrollbarXRail, 'click', function (e) {
-    var halfOfScrollbarLength = _.toInt(i.scrollbarXWidth / 2);
-    var positionLeft = i.railXRatio * (e.pageX - window.pageXOffset - pageOffset(i.scrollbarXRail).left - halfOfScrollbarLength);
-    var maxPositionLeft = i.railXRatio * (i.railXWidth - i.scrollbarXWidth);
-    var positionRatio = positionLeft / maxPositionLeft;
+    var positionLeft = e.pageX - window.pageXOffset - pageOffset(i.scrollbarXRail).left;
+    var direction = positionLeft > i.scrollbarXLeft ? 1 : -1;
 
-    if (positionRatio < 0) {
-      positionRatio = 0;
-    } else if (positionRatio > 1) {
-      positionRatio = 1;
-    }
-
-    updateScroll(element, 'left', ((i.contentWidth - i.containerWidth) * positionRatio) - i.negativeScrollAdjustment);
+    updateScroll(element, 'left', element.scrollLeft + direction * i.containerWidth);
     updateGeometry(element);
 
     e.stopPropagation();
@@ -463,7 +441,7 @@ module.exports = function (element) {
   bindClickRailHandler(element, i);
 };
 
-},{"../../lib/helper":6,"../instances":20,"../update-geometry":21,"../update-scroll":22}],11:[function(require,module,exports){
+},{"../instances":20,"../update-geometry":21,"../update-scroll":22}],11:[function(require,module,exports){
 'use strict';
 
 var _ = require('../../lib/helper');
@@ -642,16 +620,40 @@ function bindKeyboardHandler(element, i) {
 
     switch (e.which) {
     case 37: // left
-      deltaX = -30;
+      if (e.metaKey) {
+        deltaX = -i.contentWidth;
+      } else if (e.altKey) {
+        deltaX = -i.containerWidth;
+      } else {
+        deltaX = -30;
+      }
       break;
     case 38: // up
-      deltaY = 30;
+      if (e.metaKey) {
+        deltaY = i.contentHeight;
+      } else if (e.altKey) {
+        deltaY = i.containerHeight;
+      } else {
+        deltaY = 30;
+      }
       break;
     case 39: // right
-      deltaX = 30;
+      if (e.metaKey) {
+        deltaX = i.contentWidth;
+      } else if (e.altKey) {
+        deltaX = i.containerWidth;
+      } else {
+        deltaX = 30;
+      }
       break;
     case 40: // down
-      deltaY = -30;
+      if (e.metaKey) {
+        deltaY = -i.contentHeight;
+      } else if (e.altKey) {
+        deltaY = -i.containerHeight;
+      } else {
+        deltaY = -30;
+      }
       break;
     case 33: // page up
       deltaY = 90;
@@ -848,6 +850,18 @@ function bindMouseDragHandler(element) {
   });
 
   /**
+   * Drop Listener.
+   * This is necessary to detect when we should stop scrolling even if the mouse is in
+   * the position where it should scroll in some direction.
+   * Added as dragend is not always trigerred.
+   */
+  element.addEventListener('drop',
+  function () {
+    isDragging = false;
+    stopScrolling();
+  });
+
+  /**
    * Because firefox does not have mouse position in a drag event I needed to use something else.
    * If isDragging is set to true then this method will start scrolling.
    *
@@ -1001,13 +1015,18 @@ function bindMouseWheelHandler(element, i) {
       deltaY = e.wheelDelta;
     }
 
+    if (e.shiftKey) {
+      // reverse axis with shift key
+      return [-deltaY, -deltaX];
+    }
     return [deltaX, deltaY];
   }
 
   function shouldBeConsumedByChild(deltaX, deltaY) {
     var child = element.querySelector('textarea:hover, select[multiple]:hover, .ps-child:hover');
     if (child) {
-      if (child.tagName !== 'TEXTAREA' && !window.getComputedStyle(child).overflow.match(/(scroll|auto)/)) {
+      if (!window.getComputedStyle(child).overflow.match(/(scroll|auto)/)) {
+        // if not scrollable
         return false;
       }
 
@@ -1154,6 +1173,12 @@ function bindSelectionHandler(element, i) {
     }
   });
   i.event.bind(window, 'mouseup', function () {
+    if (isSelected) {
+      isSelected = false;
+      stopScrolling();
+    }
+  });
+  i.event.bind(window, 'keyup', function () {
     if (isSelected) {
       isSelected = false;
       stopScrolling();
@@ -1367,9 +1392,7 @@ function bindTouchHandler(element, i, supportsTouch, supportsIePointer) {
     i.event.bind(element, 'touchstart', touchStart);
     i.event.bind(element, 'touchmove', touchMove);
     i.event.bind(element, 'touchend', touchEnd);
-  }
-
-  if (supportsIePointer) {
+  } else if (supportsIePointer) {
     if (window.PointerEvent) {
       i.event.bind(window, 'pointerdown', globalTouchStart);
       i.event.bind(window, 'pointerup', globalTouchEnd);
@@ -1418,13 +1441,13 @@ var nativeScrollHandler = require('./handler/native-scroll');
 module.exports = function (element, userSettings) {
   userSettings = typeof userSettings === 'object' ? userSettings : {};
 
-  cls.add(element, 'ps-container');
+  cls.add(element, 'ps');
 
   // Create a plugin instance.
   var i = instances.add(element);
 
   i.settings = _.extend(i.settings, userSettings);
-  cls.add(element, 'ps-theme-' + i.settings.theme);
+  cls.add(element, 'ps--theme_' + i.settings.theme);
 
   i.settings.handlers.forEach(function (handlerName) {
     handlers[handlerName](element);
@@ -1470,15 +1493,15 @@ function Instance(element) {
   i.ownerDocument = element.ownerDocument || document;
 
   function focus() {
-    cls.add(element, 'ps-focus');
+    cls.add(element, 'ps--focus');
   }
 
   function blur() {
-    cls.remove(element, 'ps-focus');
+    cls.remove(element, 'ps--focus');
   }
 
-  i.scrollbarXRail = dom.appendTo(dom.e('div', 'ps-scrollbar-x-rail'), element);
-  i.scrollbarX = dom.appendTo(dom.e('div', 'ps-scrollbar-x'), i.scrollbarXRail);
+  i.scrollbarXRail = dom.appendTo(dom.e('div', 'ps__scrollbar-x-rail'), element);
+  i.scrollbarX = dom.appendTo(dom.e('div', 'ps__scrollbar-x'), i.scrollbarXRail);
   i.scrollbarX.setAttribute('tabindex', 0);
   i.event.bind(i.scrollbarX, 'focus', focus);
   i.event.bind(i.scrollbarX, 'blur', blur);
@@ -1496,8 +1519,8 @@ function Instance(element) {
   i.railXWidth = null;
   i.railXRatio = null;
 
-  i.scrollbarYRail = dom.appendTo(dom.e('div', 'ps-scrollbar-y-rail'), element);
-  i.scrollbarY = dom.appendTo(dom.e('div', 'ps-scrollbar-y'), i.scrollbarYRail);
+  i.scrollbarYRail = dom.appendTo(dom.e('div', 'ps__scrollbar-y-rail'), element);
+  i.scrollbarY = dom.appendTo(dom.e('div', 'ps__scrollbar-y'), i.scrollbarYRail);
   i.scrollbarY.setAttribute('tabindex', 0);
   i.event.bind(i.scrollbarY, 'focus', focus);
   i.event.bind(i.scrollbarY, 'blur', blur);
@@ -1607,7 +1630,7 @@ module.exports = function (element) {
 
   var existingRails;
   if (!element.contains(i.scrollbarXRail)) {
-    existingRails = dom.queryChildren(element, '.ps-scrollbar-x-rail');
+    existingRails = dom.queryChildren(element, '.ps__scrollbar-x-rail');
     if (existingRails.length > 0) {
       existingRails.forEach(function (rail) {
         dom.remove(rail);
@@ -1616,7 +1639,7 @@ module.exports = function (element) {
     dom.appendTo(i.scrollbarXRail, element);
   }
   if (!element.contains(i.scrollbarYRail)) {
-    existingRails = dom.queryChildren(element, '.ps-scrollbar-y-rail');
+    existingRails = dom.queryChildren(element, '.ps__scrollbar-y-rail');
     if (existingRails.length > 0) {
       existingRails.forEach(function (rail) {
         dom.remove(rail);
@@ -1655,17 +1678,17 @@ module.exports = function (element) {
   updateCss(element, i);
 
   if (i.scrollbarXActive) {
-    cls.add(element, 'ps-active-x');
+    cls.add(element, 'ps--active-x');
   } else {
-    cls.remove(element, 'ps-active-x');
+    cls.remove(element, 'ps--active-x');
     i.scrollbarXWidth = 0;
     i.scrollbarXLeft = 0;
     updateScroll(element, 'left', 0);
   }
   if (i.scrollbarYActive) {
-    cls.add(element, 'ps-active-y');
+    cls.add(element, 'ps--active-y');
   } else {
-    cls.remove(element, 'ps-active-y');
+    cls.remove(element, 'ps--active-y');
     i.scrollbarYHeight = 0;
     i.scrollbarYTop = 0;
     updateScroll(element, 'top', 0);
