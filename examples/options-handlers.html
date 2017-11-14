@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <title>perfect-scrollbar example</title>
-    <link href="../dist/css/perfect-scrollbar.css" rel="stylesheet">
-    <script src="../dist/js/perfect-scrollbar.js"></script>
+    <link href="../css/perfect-scrollbar.css" rel="stylesheet">
+    <script src="../dist/perfect-scrollbar.js"></script>
     <style>
+<<<<<<< HEAD
       .contentHolder { position:relative; padding:0px; width: 600px; height: 400px; overflow: auto; }
       .contentHolder .content { background-image: url('./azusa.jpg'); width: 1280px; height: 720px; }
       .contentHolder .drag-rectangle {width: 150px; height: 150px; background-color: green; margin-bottom: 10px;-khtml-user-drag: element;}
       .spacer { text-align:center }
+=======
+    #container {
+      position: relative;
+      margin: 0px auto;
+      padding: 0px;
+      width: 600px;
+      height: 400px;
+      overflow: auto;
+    }
+    #container .content {
+      background-image: url('./assets/azusa.jpg');
+      width: 1280px;
+      height: 720px;
+      color: blue;
+      font-size: 20px;
+    }
+>>>>>>> cf563943558a65b5d30c6a0f945ef454fdf337f1
     </style>
   </head>
   <body>
-    <h1>Default</h1>
-    <pre><code>handlers: ['click-rail', 'drag-scrollbar', 'keyboard', 'wheel', 'touch']</code></pre>
-    <div id="default" class="contentHolder">
+    <div id="container">
       <div class="content">
+        No rail/thumb interaction!
       </div>
     </div>
 
+<<<<<<< HEAD
     <h1>No keyboard</h1>
     <pre><code>handlers: ['click-rail', 'drag-scrollbar', 'wheel', 'touch']</code></pre>
     <div id="no-keyboard" class="contentHolder">
@@ -85,7 +101,14 @@
           });
         }
       };
+=======
+    <script>
+    var $ = document.querySelector.bind(document);
+
+    new PerfectScrollbar('#container', {
+      handlers: ['keyboard', 'wheel', 'touch']
+    });
+>>>>>>> cf563943558a65b5d30c6a0f945ef454fdf337f1
     </script>
   </body>
 </html>
-
