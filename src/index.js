@@ -10,6 +10,7 @@ import clickRail from './handlers/click-rail';
 import dragThumb from './handlers/drag-thumb';
 import keyboard from './handlers/keyboard';
 import wheel from './handlers/mouse-wheel';
+import mouseDrag from './handlers/mouse-drag';
 import touch from './handlers/touch';
 
 const defaultSettings = () => ({
@@ -31,6 +32,7 @@ const defaultSettings = () => ({
 const handlers = {
   'click-rail': clickRail,
   'drag-thumb': dragThumb,
+  'mouse-drag': mouseDrag,
   keyboard,
   wheel,
   touch,
