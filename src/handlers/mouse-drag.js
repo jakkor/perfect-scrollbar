@@ -196,6 +196,6 @@ function bindMouseDragHandler(element) {
   }, true);
 }
 
-module.exports = function (element) {
-  bindMouseDragHandler(element);
+export default function (i) {
+  bindMouseDragHandler(i.element);
 };
