@@ -11,7 +11,7 @@ function positionChecker(borderOffset) {
  * @param  {Object}  Container Element
  * @return {Boolean}
  */
-positionChecker.prototype.isNearTopBorder = function (e, element) {
+positionChecker.prototype.isNearTopBorder = function(e, element) {
   var topPos = element.getBoundingClientRect().top + window.scrollY;
   var leftPos = element.getBoundingClientRect().left + window.scrollX;
 
@@ -34,12 +34,13 @@ positionChecker.prototype.isNearTopBorder = function (e, element) {
  * @param  {Object}  Container Element
  * @return {Boolean}
  */
-positionChecker.prototype.isNearBottomBorder = function (e, element) {
+positionChecker.prototype.isNearBottomBorder = function(e, element) {
   var bottomPos = element.getBoundingClientRect().bottom + window.scrollY;
   var leftPos = element.getBoundingClientRect().left + window.scrollX;
 
   if (
-    e.pageY >= bottomPos - Math.round(this.borderOffset * element.offsetHeight) &&
+    e.pageY >=
+      bottomPos - Math.round(this.borderOffset * element.offsetHeight) &&
     e.pageY <= bottomPos &&
     e.pageX >= leftPos &&
     e.pageX <= leftPos + element.offsetWidth
@@ -50,4 +51,4 @@ positionChecker.prototype.isNearBottomBorder = function (e, element) {
   return false;
 };
 
-module.exports = positionChecker;
+export default positionChecker;

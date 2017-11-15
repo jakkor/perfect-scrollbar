@@ -1,7 +1,7 @@
 'use strict';
 
-var updateScroll = require('../update-scroll');
-var PositionChecker = require('./mouse-drag/position-checker.js');
+import PositionChecker from './mouse-drag/position-checker.js';
+import updateGeometry from '../update-geometry';
 
 /**
  * Drag handler is for scrolling the container when we are dragging something in it.
@@ -17,7 +17,8 @@ var PositionChecker = require('./mouse-drag/position-checker.js');
  * @param  {[type]}
  * @return {[type]}
  */
-function bindMouseDragHandler(element) {
+function bindMouseDragHandler(i) {
+  const element = i.element;
 
   // Scroll frequency - for example scroll will run every 30 milliseconds.
   var scrollEvery = 30;
@@ -71,23 +72,33 @@ function bindMouseDragHandler(element) {
    * @param  {String} Scroll direction, for example: "top"
    */
   function scroll(e, element, direction) {
-
     // Stop whole scrolling process if isDragging is false
     if (shouldScroll === false) {
       return;
     }
+    
+    let update = null;
 
     switch (direction) {
-    case 'top':
-      updateScroll(element, 'top', element.scrollTop - movePixels);
-      break;
-    case 'bottom':
-      updateScroll(element, 'top', element.scrollTop + movePixels);
-      break;
+      case 'top':
+        update  = element.scrollTop - movePixels;
+        if (update < 0) {
+          update = 0;
+        }
+        element.scrollTop = update
+        updateGeometry(i);
+        break;
+      case 'bottom':
+        update  = element.scrollTop + movePixels;
+        if (update + element.offsetHeight > element.scrollHeight) {
+          update = element.scrollHeight - element.offsetHeight - 1;
+        }
+        element.scrollTop = update
+        updateGeometry(i);
+        break;
     }
 
-    setTimeout(
-    function () {
+    setTimeout(function() {
       scroll(e, element, direction);
     }, scrollEvery);
   }
@@ -109,7 +120,6 @@ function bindMouseDragHandler(element) {
    * @param  {String} Direction
    */
   function startScrolling(e, element, direction) {
-
     // Stop any previous scrolling
     stopScrolling();
 
@@ -118,7 +128,7 @@ function bindMouseDragHandler(element) {
     currentScrollDirection = direction;
 
     // Start scroll function. It should be delayed so the stopScrolling method will finish
-    setTimeout(function () {
+    setTimeout(function() {
       scroll(e, element, direction);
     }, scrollEvery * 3);
   }
@@ -128,7 +138,7 @@ function bindMouseDragHandler(element) {
    *
    * Sets isDragging to true. This event is because we need to detect when mouse is dragging something.
    */
-  element.addEventListener('drag', function () {
+  element.addEventListener('drag', function() {
     // console.log("Drag");
     isDragging = true;
   });
@@ -138,8 +148,7 @@ function bindMouseDragHandler(element) {
    * This is necessary to detect when we should stop scrolling even if the mouse is in
    * the position where it should scroll in some direction.
    */
-  element.addEventListener('dragend',
-  function () {
+  element.addEventListener('dragend', function() {
     isDragging = false;
     stopScrolling();
   });
@@ -150,8 +159,7 @@ function bindMouseDragHandler(element) {
    * the position where it should scroll in some direction.
    * Added as dragend is not always trigerred.
    */
-  element.addEventListener('drop',
-  function () {
+  element.addEventListener('drop', function() {
     isDragging = false;
     stopScrolling();
   });
@@ -162,40 +170,42 @@ function bindMouseDragHandler(element) {
    *
    * @param  {Object} Event
    */
-  element.addEventListener('dragover', function (e) {
+  element.addEventListener(
+    'dragover',
+    function(e) {
+      var newScrollDirection = false;
 
-    var newScrollDirection = false;
+      // Stop scrolling if we stop dragging something
+      if (isDragging === false && shouldScroll === true) {
+        stopScrolling();
+      }
 
-    // Stop scrolling if we stop dragging something
-    if (isDragging === false && shouldScroll === true) {
-      stopScrolling();
-    }
+      // Do nothing if we aren't scrolling anything and not dragging.
+      // This is just in case really.
+      if (isDragging === false) {
+        return;
+      }
 
-    // Do nothing if we aren't scrolling anything and not dragging.
-    // This is just in case really.
-    if (isDragging === false) {
-      return;
-    }
+      // Set the scroll direction or stop scrolling if there is no valid direction.
+      if (positionChecker.isNearTopBorder(e, element)) {
+        newScrollDirection = 'top';
+      } else if (positionChecker.isNearBottomBorder(e, element)) {
+        newScrollDirection = 'bottom';
+      } else if (shouldScroll === true) {
+        stopScrolling();
+        return;
+      }
 
-    // Set the scroll direction or stop scrolling if there is no valid direction.
-    if (positionChecker.isNearTopBorder(e, element)) {
-      newScrollDirection = 'top';
-    } else if (positionChecker.isNearBottomBorder(e, element)) {
-      newScrollDirection = 'bottom';
-    } else if (shouldScroll === true) {
-      stopScrolling();
-      return;
-    }
-
-    // Start  scrolling if the new direction is different from the current one.
-    // This is to prevent starting again when we move a mouse for example on the top border only.
-    if (newScrollDirection !== currentScrollDirection) {
-      startScrolling(e, element, newScrollDirection);
-    }
-
-  }, true);
+      // Start  scrolling if the new direction is different from the current one.
+      // This is to prevent starting again when we move a mouse for example on the top border only.
+      if (newScrollDirection !== currentScrollDirection) {
+        startScrolling(e, element, newScrollDirection);
+      }
+    },
+    true
+  );
 }
 
-export default function (i) {
-  bindMouseDragHandler(i.element);
-};
+export default function(i) {
+  bindMouseDragHandler(i);
+}
